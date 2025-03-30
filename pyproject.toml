@@ -1,0 +1,23 @@
+[project]
+name = "mapleschoolbot"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "keyboard (>=0.13.5,<0.14.0)",
+    "pywin32 (>=310,<311)",
+    "opencv-python (>=4.8.0,<5.0.0)",
+    "numpy (>=1.24.0,<2.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "mapleschoolbot", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
