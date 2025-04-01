@@ -6,13 +6,12 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = "^3.8"
 dependencies = [
-    "keyboard (>=0.13.5,<0.14.0)",
-    "pywin32 (>=310,<311)",
-    "opencv-python (>=4.8.0,<5.0.0)",
-    "numpy (>=1.24.0,<2.0.0)",
-    "pyautogui (>=0.9.54,<0.10.0)"
+    "opencv-python (>=4.11.0.86,<5.0.0.0)",
+    "numpy",
+    "pillow",
+    "keyboard (>=0.13.5,<0.14.0)"
 ]
 
 [tool.poetry]

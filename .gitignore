@@ -40,3 +40,6 @@ poetry.lock
 test_result.png
 screenshot_test.png
 assets/*.png 
+
+# Debug files
+debug/
