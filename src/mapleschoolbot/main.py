@@ -3,6 +3,7 @@ import time
 from time import sleep
 import os
 import logging
+import random
 
 from PIL import ImageGrab
 import cv2
@@ -23,9 +24,33 @@ class MapleSchoolBot:
         self.left_key = 'left'
         self.right_key = 'right'
         self.attach_key = 'e'
-        
-        # 屏幕截取间隔
-        self.flash_interval = 0.25
+        self.skills = [
+            {
+                'key': '2',  # 技能按键
+                'min_interval': 90,  # 最小间隔（秒）
+                'max_interval': 100,  # 最大间隔（秒）
+                'last_cast_time': None,  # 上次释放时间
+            },
+            {
+                'key': 'home',  # 猫粮
+                'min_interval': 1800,  # 最小间隔（秒）
+                'max_interval': 1800,  # 最大间隔（秒）
+                'last_cast_time': None,  # 上次释放时间
+            },
+            {
+                'key': 'z',  # 拣取
+                'min_interval': 0.15,  # 最小间隔（秒）
+                'max_interval': 0.25,  # 最大间隔（秒）
+                'last_cast_time': None,  # 上次释放时间
+            },
+            # {
+            #     'key': 'w',  # 瞬移
+            #     'min_interval': 1.5,  # 最小间隔（秒）
+            #     'max_interval': 2,  # 最大间隔（秒）
+            #     'last_cast_time': None,  # 上次释放时间
+            # },
+            # 可以添加更多技能
+        ]
 
         # 是否开启调试模式
         self.debug = debug
@@ -42,7 +67,6 @@ class MapleSchoolBot:
         self.left_boundary_pos = None
         self.right_boundary_pos = None
         self.last_screenshot_time = None
-        self.update_positions()
 
         # 攻击时间戳
         self.last_attack_time = None
@@ -76,57 +100,50 @@ class MapleSchoolBot:
         screenshot = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
         return screenshot
 
-    def update_positions(self):
-        self.screenshot = self.capture_screenshot()
-        self.screen_no += 1
-        self.last_screenshot_time = time.time()
+    def update_positions_with_interval(self, flash_interval=0.1):
+        if self.last_screenshot_time is None or time.time() - self.last_screenshot_time >= flash_interval:
+            self.screenshot = self.capture_screenshot()
+            self.screen_no += 1
+            self.last_screenshot_time = time.time()
 
-        # 更新
-        # 更新角色位置
-        found_char, char_pos, _ = self.find_position(self.screenshot, self.character_template, 0.8)
-        if found_char:
-            self.character_pos = char_pos
-        else:
-            self.character_pos = None
+            # 更新角色位置
+            found_char, char_pos, _ = self.find_position(self.screenshot, self.character_template, 0.8)
+            if found_char:
+                self.character_pos = char_pos
+            else:
+                self.character_pos = None
 
-        # 更新左边界位置
-        found_left_boundary, left_boundary_pos, _ = self.find_position(self.screenshot, self.left_boundary_image, 0.8)
-        if found_left_boundary:
-            self.left_boundary_pos = left_boundary_pos
-        else:
-            self.left_boundary_pos = None
+            # 更新左边界位置
+            found_left_boundary, left_boundary_pos, _ = self.find_position(self.screenshot, self.left_boundary_image, 0.8)
+            if found_left_boundary:
+                self.left_boundary_pos = left_boundary_pos
+            else:
+                self.left_boundary_pos = None
 
-        # 更新右边界位置
-        found_right_boundary, right_boundary_pos, _ = self.find_position(self.screenshot, self.right_boundary_image, 0.8)
-        if found_right_boundary:
-            self.right_boundary_pos = right_boundary_pos
-        else:
-            self.right_boundary_pos = None
+            # 更新右边界位置
+            found_right_boundary, right_boundary_pos, _ = self.find_position(self.screenshot, self.right_boundary_image, 0.8)
+            if found_right_boundary:
+                self.right_boundary_pos = right_boundary_pos
+            else:
+                self.right_boundary_pos = None
 
-        if self.debug:
-            self.draw_position(self.screenshot, self.character_template, 0.8)
-            self.draw_position(self.screenshot, self.left_boundary_image, 0.8)
-            self.draw_position(self.screenshot, self.right_boundary_image, 0.8)
-            # 保存结果图片
-            
-            # 确保debug文件夹存在
-            if not os.path.exists('./debug'):
-                os.makedirs('./debug')
-            cv2.imwrite(f'./debug/screenshot_{self.screen_no}.png', self.screenshot)
-            cv2.imwrite(f'./debug/character_{self.screen_no}.png', self.character_template)
-            cv2.imwrite(f'./debug/left_boundary_{self.screen_no}.png', self.left_boundary_image)
-            cv2.imwrite(f'./debug/right_boundary_{self.screen_no}.png', self.right_boundary_image) 
+            if self.debug:
+                self.draw_position(self.screenshot, self.character_template, 0.8)
+                self.draw_position(self.screenshot, self.left_boundary_image, 0.8)
+                self.draw_position(self.screenshot, self.right_boundary_image, 0.8)
+                # 保存结果图片
+                
+                # 确保debug文件夹存在
+                if not os.path.exists('./debug'):
+                    os.makedirs('./debug')
+                cv2.imwrite(f'./debug/screenshot_{self.screen_no}.png', self.screenshot)
 
     def change_direction(self):
         # 改变方向
         if self.current_direction == Direction.RIGHT:
             self.current_direction = Direction.LEFT
-            keyboard.release(self.right_key)
-            keyboard.press(self.left_key)
         else:
             self.current_direction = Direction.RIGHT
-            keyboard.release(self.left_key)
-            keyboard.press(self.right_key)
 
     def check_meeting_boundary(self):
         if self.character_pos is not None:
@@ -143,20 +160,47 @@ class MapleSchoolBot:
                     self.change_direction()
                     logging.info("角色超过左边界，改变方向")
 
+    def move(self):
+        # 移动角色
+        if self.current_direction == Direction.RIGHT:
+            keyboard.release(self.left_key)
+            sleep(0.05)
+            keyboard.press(self.right_key)
+        else:
+            keyboard.release(self.right_key)
+            sleep(0.05)
+            keyboard.press(self.left_key)
+
+    def cast_skills(self):
+        current_time = time.time()
+
+        for skill in self.skills:
+            # 检查是否到达释放时间
+            if skill['last_cast_time'] is None or current_time - skill['last_cast_time'] > random.uniform(skill['min_interval'], skill['max_interval']):
+                # 释放技能
+                keyboard.press(skill['key'])
+                sleep(random.uniform(0.05, 0.08))
+                keyboard.release(skill['key'])
+                
+                # 更新时间戳
+                skill['last_cast_time'] = current_time
+
     def run(self):
         # 启动程序
         self.running = True
-        # 开始向右移动
-        self.right_move()
+
         while self.running:
             # 截取屏幕
-            if time.time() - self.last_screenshot_time >= self.flash_interval:
-                self.update_positions()
+            self.update_positions_with_interval(0.1)
                 
             # 执行移动
             self.check_meeting_boundary()
+            self.move()
             # 执行攻击
-            self.attack()
+            self.attack_with_interval(0.5, 0.8)
+            # 释放技能
+            self.cast_skills()
+
             # 防止CPU占用过高
             time.sleep(0.01)
 
@@ -168,20 +212,13 @@ class MapleSchoolBot:
     def stop(self):
         # 停止程序
         self.running = False
-        if self.current_direction == Direction.RIGHT:
-            keyboard.release(self.right_key)
-        else:
-            keyboard.release(self.left_key)
-
-    def right_move(self):
-        # 向右移动
+        keyboard.release(self.right_key)
         keyboard.release(self.left_key)
-        keyboard.press(self.right_key)
 
-    def attack(self, min_attack_interval=0.6, max_attack_interval=1.2):
+    def attack_with_interval(self, min_attack_interval, max_attack_interval):
         if self.last_attack_time is None or time.time() - self.last_attack_time >= random.uniform(min_attack_interval, max_attack_interval):
             keyboard.press(self.attach_key)
-            sleep(random.uniform(0.05, 0.1))
+            sleep(random.uniform(0.05, 0.08))
             keyboard.release(self.attach_key)
             self.last_attack_time = time.time()
 
@@ -215,8 +252,6 @@ class MapleSchoolBot:
             # 绘制文本
             cv2.putText(screenshot, text, text_pos, font, font_scale, text_color, font_thickness)
             cv2.putText(screenshot, conf_text, conf_pos, font, font_scale, text_color, font_thickness)
-            
-
 
     def draw_positions(self, screenshot, template, confidence_threshold):
         # 进行模板匹配, 在截图中寻找角色，并在截图中绘制矩形框
