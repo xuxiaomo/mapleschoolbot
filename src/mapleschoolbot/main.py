@@ -22,6 +22,7 @@ class MapleSchoolBot:
         # 操作按键设置
         self.left_key = 'left'
         self.right_key = 'right'
+        self.attach_key = 'e'
         
         # 屏幕截取间隔
         self.flash_interval = 0.25
@@ -43,7 +44,9 @@ class MapleSchoolBot:
         self.last_screenshot_time = None
         self.update_positions()
 
-    
+        # 攻击时间戳
+        self.last_attack_time = None
+
     def load_character_template(self, character):
         # 加载角色模板
         character_template = cv2.imread(f'./src/mapleschoolbot/resources/{character}.png')
@@ -152,6 +155,8 @@ class MapleSchoolBot:
                 
             # 执行移动
             self.check_meeting_boundary()
+            # 执行攻击
+            self.attack()
             # 防止CPU占用过高
             time.sleep(0.01)
 
@@ -172,6 +177,13 @@ class MapleSchoolBot:
         # 向右移动
         keyboard.release(self.left_key)
         keyboard.press(self.right_key)
+
+    def attack(self, min_attack_interval=0.6, max_attack_interval=1.2):
+        if self.last_attack_time is None or time.time() - self.last_attack_time >= random.uniform(min_attack_interval, max_attack_interval):
+            keyboard.press(self.attach_key)
+            sleep(random.uniform(0.05, 0.1))
+            keyboard.release(self.attach_key)
+            self.last_attack_time = time.time()
 
     def draw_position(self, screenshot, character_template, confidence_threshold):
         # 进行模板匹配, 在截图中寻找角色，并在截图中绘制矩形框
