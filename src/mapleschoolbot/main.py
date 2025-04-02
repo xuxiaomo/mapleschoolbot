@@ -43,12 +43,12 @@ class MapleSchoolBot:
                 'max_interval': 0.25,  # 最大间隔（秒）
                 'last_cast_time': None,  # 上次释放时间
             },
-            # {
-            #     'key': 'w',  # 瞬移
-            #     'min_interval': 1.5,  # 最小间隔（秒）
-            #     'max_interval': 2,  # 最大间隔（秒）
-            #     'last_cast_time': None,  # 上次释放时间
-            # },
+            {
+                'key': 'w',  # 瞬移
+                'min_interval': 10,  # 最小间隔（秒）
+                'max_interval': 15,  # 最大间隔（秒）
+                'last_cast_time': None,  # 上次释放时间
+            },
             # 可以添加更多技能
         ]
 
@@ -197,7 +197,7 @@ class MapleSchoolBot:
             self.check_meeting_boundary()
             self.move()
             # 执行攻击
-            self.attack_with_interval(0.5, 0.8)
+            self.attack_with_interval(0.2, 0.3)
             # 释放技能
             self.cast_skills()
 
