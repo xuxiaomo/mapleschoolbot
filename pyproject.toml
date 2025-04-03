@@ -1,23 +1,26 @@
-[project]
+[tool.poetry]
 name = "mapleschoolbot"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "Your Name",email = "you@example.com"}
-]
+description = "maple school auto farm bot"
+authors = ["xiaomo <xuxiaomo1994@icloud.com>"]
 readme = "README.md"
-requires-python = "^3.8"
-dependencies = [
-    "opencv-python (>=4.11.0.86,<5.0.0.0)",
-    "numpy",
-    "pillow",
-    "keyboard (>=0.13.5,<0.14.0)"
-]
+packages = [ { include = "mapleschoolbot", from = "src" } ]
 
-[tool.poetry]
-packages = [{include = "mapleschoolbot", from = "src"}]
-
+[tool.poetry.dependencies]
+python = "^3.8"
+opencv-python = "*"
+numpy = "*"
+pillow = "*"
+keyboard = "*"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "ali"
+url = "https://mirrors.aliyun.com/pypi/simple/"
+priority = "primary"
+
+[tool.poetry.scripts]
+main = "mapleschoolbot.main:main"
