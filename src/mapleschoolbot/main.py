@@ -9,6 +9,9 @@ from PIL import ImageGrab
 import cv2
 import numpy as np
 import keyboard
+import yaml
+
+from mapleschoolbot.utils.drawing import draw_position, draw_positions
 
 
 class Direction(Enum):
@@ -16,49 +19,12 @@ class Direction(Enum):
     RIGHT = 2
 
 class MapleSchoolBot:
-    def __init__(self, debug=False):
+    def __init__(self, config_path='./config.yaml'):
         self.running = False
         self.current_direction = Direction.RIGHT
         
-        # 操作按键设置
-        self.left_key = 'left'
-        self.right_key = 'right'
-        self.attach_key = 'e'
-        self.skills = [
-            {
-                'key': '2',  # 技能按键
-                'min_interval': 90,  # 最小间隔（秒）
-                'max_interval': 100,  # 最大间隔（秒）
-                'last_cast_time': None,  # 上次释放时间
-            },
-            {
-                'key': 'home',  # 猫粮
-                'min_interval': 1800,  # 最小间隔（秒）
-                'max_interval': 1800,  # 最大间隔（秒）
-                'last_cast_time': None,  # 上次释放时间
-            },
-            {
-                'key': 'z',  # 拣取
-                'min_interval': 0.15,  # 最小间隔（秒）
-                'max_interval': 0.25,  # 最大间隔（秒）
-                'last_cast_time': None,  # 上次释放时间
-            },
-            {
-                'key': 'w',  # 瞬移
-                'min_interval': 10,  # 最小间隔（秒）
-                'max_interval': 15,  # 最大间隔（秒）
-                'last_cast_time': None,  # 上次释放时间
-            },
-            # 可以添加更多技能
-        ]
-
-        # 是否开启调试模式
-        self.debug = debug
-
-        # 加载模板
-        self.character_template = self.load_character_template('character')
-        self.left_boundary_image = self.load_left_boundary_image()
-        self.right_boundary_image = self.load_right_boundary_image()
+        # 加载配置
+        self.load_config(config_path)
         
         # 更新初始坐标
         self.screenshot = None
@@ -71,20 +37,33 @@ class MapleSchoolBot:
         # 攻击时间戳
         self.last_attack_time = None
 
-    def load_character_template(self, character):
-        # 加载角色模板
-        character_template = cv2.imread(f'./src/mapleschoolbot/resources/{character}.png')
-        return character_template
+    def load_config(self, config_path):
+        # 加载配置文件
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
+        # 是否开启调试模式
+        self.debug = config.get('debug', False)
 
-    def load_left_boundary_image(self):
-        # 加载左边界图像
-        left_boundary_image = cv2.imread('./src/mapleschoolbot/resources/left_boundary.png')
-        return left_boundary_image
+        # 操作按键设置
+        self.left_key = config['keys']['left']
+        self.right_key = config['keys']['right']
+        self.attach_key = config['keys']['attack']
+        
+        # 技能设置
+        self.skills = []
+        for skill in config['skills']:
+            self.skills.append({
+                'key': skill['key'],
+                'min_interval': skill['min_interval'],
+                'max_interval': skill['max_interval'],
+                'last_cast_time': None
+            })
 
-    def load_right_boundary_image(self):
-        # 加载右边界图像
-        right_boundary_image = cv2.imread('./src/mapleschoolbot/resources/right_boundary.png')
-        return right_boundary_image
+        # 加载模板
+        self.character_template = cv2.imread(config['templates']['character'])
+        self.left_boundary_image = cv2.imread(config['templates']['left_boundary'])
+        self.right_boundary_image = cv2.imread(config['templates']['right_boundary'])
 
     def find_position(self, screenshot, template, confidence_threshold):
         # 进行模板匹配, 在截图中寻找角色
@@ -128,15 +107,17 @@ class MapleSchoolBot:
                 self.right_boundary_pos = None
 
             if self.debug:
-                self.draw_position(self.screenshot, self.character_template, 0.8)
-                self.draw_position(self.screenshot, self.left_boundary_image, 0.8)
-                self.draw_position(self.screenshot, self.right_boundary_image, 0.8)
+                draw_position(self.screenshot, self.character_template, 0.8)
+                draw_position(self.screenshot, self.left_boundary_image, 0.8)
+                draw_position(self.screenshot, self.right_boundary_image, 0.8)
                 # 保存结果图片
                 
                 # 确保debug文件夹存在
                 if not os.path.exists('./debug'):
                     os.makedirs('./debug')
                 cv2.imwrite(f'./debug/screenshot_{self.screen_no}.png', self.screenshot)
+
+    # 删除原来的 draw_position 和 draw_positions 方法
 
     def change_direction(self):
         # 改变方向
@@ -295,10 +276,15 @@ class MapleSchoolBot:
         else:
             return False, None
 
-if __name__ == "__main__":
+
+def main():
     # 开始程序，请在10秒内切换到游戏窗口，按F12退出程序
     print("请在10秒内切换到游戏窗口，按F12退出程序")
     time.sleep(10)
 
-    bot = MapleSchoolBot(debug=True)
+    bot = MapleSchoolBot()  # 移除 debug=True，现在从配置文件读取
     bot.run()
+
+
+if __name__ == "__main__":
+    main()

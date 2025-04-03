@@ -12,6 +12,7 @@ opencv-python = "*"
 numpy = "*"
 pillow = "*"
 keyboard = "*"
+pyyaml = "*"
 
 [build-system]
 requires = ["poetry-core"]

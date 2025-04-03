@@ -1,0 +1,36 @@
+# 操作按键设置
+keys:
+  left: 'left'
+  right: 'right'
+  attack: 'q'
+
+# 技能设置
+skills:
+  # - key: '2'  # 技能按键
+  #   min_interval: 90  # 最小间隔（秒）
+  #   max_interval: 100  # 最大间隔（秒）
+  #   description: "技能"  # 描述
+
+  - key: 'home'
+    min_interval: 1800
+    max_interval: 1800
+    description: "猫粮"
+
+  - key: 'z'
+    min_interval: 0.15
+    max_interval: 0.25
+    description: "拣取"
+
+  # - key: 'w'
+  #   min_interval: 10
+  #   max_interval: 15
+  #   description: "瞬移"
+
+# 模板设置
+templates:
+  character: './src/mapleschoolbot/resources/character.png'
+  left_boundary: './src/mapleschoolbot/resources/left_boundary.png'
+  right_boundary: './src/mapleschoolbot/resources/right_boundary.png'
+
+# 调试设置
+debug: true
